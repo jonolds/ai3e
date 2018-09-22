@@ -1,7 +1,9 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
@@ -13,7 +15,8 @@ class Game { // NO_UCD (unused code)
 	static final int numOfSims = 1;
 	static final int popSize = 100;
 	static String timestamp;
-	boolean[] finished;
+	
+	static final String[] extraVars = {"Win%", "Loss%", "Tie%", "Busy"};
 	
 	public static void main(String[] args) throws Exception {
 		Game g = new Game();
@@ -34,55 +37,29 @@ class Game { // NO_UCD (unused code)
 	double[] evolveWeights() throws Exception {
 		// Create a random initial population
 		Matrix pop = initPopulationSize(popSize);
-		
+		Controller.doTournament(pop);
 
-
-		
-		
-		
 		return new double[] {0.0};
-		
-//		
-//		Long startTime = Instant.now().toEpochMilli();
-//		System.out.println("Start time: " + startTime);
-//		
-//		
-//		FastTourney evol1 = new FastTourney("t1", pop, startTime);
-		
-		
-//		Controller.doTournament(candidates, "a", 0);
-		
-//		for(int i = 0; i < popSize; i++)
-		
-//		System.out.println("Ending prog");
-//		System.out.println((Instant.now().toEpochMilli()-startTime)*.001 + " seconds");
-		
-		// Evolve them. For tournament selection, call Controller.doBattleNoGui(agent1, agent2).
-		
-		// Return an arbitrary member from the population
-//		double[] weights = population.row(0);
-//		printWeights(weights);
-//		return weights;
-//		Thread.sleep(2000);
-//		System.out.println(pop.cols() + "x" +pop.rows());
-//		return pop.row(0);
+
 	}
 	
 	static Matrix initPopulationSize(int size) {
+		Matrix pop = new Matrix(size, 291 + extraVars.length);
+		System.out.println(pop.cols());
+
+		pop.setAll(0.0);
 		Random r = new Random();
-		Matrix population = new Matrix(size, 291);
 		for(int i = 0; i < size; i++) {
-			double[] chromosome = population.row(i);
-			for(int j = 0; j < chromosome.length; j++)  // chromosome.length = 291
-				chromosome[j] = .3 * r.nextGaussian();
-		
+			for(int j = 0; j < 291; j++)  // chromosome.length = 291
+				pop.row(i)[j] = .3 * r.nextGaussian();
+			for(int j = 291; j < 291 + extraVars.length; j++)
+				pop.m_attr_name.set(j-291, extraVars[j-291]);
 		}
-		return population;
+		return pop;
 	}
 	
-	static void printWeights(double[] weights) {
-//		for(int i = 0; i < weights.length; i++)
-//			System.out.print(weights[i] + " ");
+	static double[] extractWeights(double[] in) {
+		return Arrays.copyOfRange(in, 0, 291);
 	}
 	
 	static ArrayList<Integer[]> readData(String letter, int start, int end) throws FileNotFoundException {
@@ -98,7 +75,9 @@ class Game { // NO_UCD (unused code)
 		return data;
 	}
 
-	
+	static void printWeights(double[] weights) {
+		Arrays.stream(weights).forEach(x->System.out.print(x + " "));
+	}	
 	static double round(double d) {
 		return ((int)(1000*d))/100.0;
 	}

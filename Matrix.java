@@ -76,6 +76,19 @@ public class Matrix {
 			this.m_data.get((int)i)[this.cols()-1] = i;
 	}
 	
+	public void addMultiCols(String [] names) {
+		Matrix tmp = new Matrix(this);
+		for(String s: names)
+			this.newColumn(s);	
+		this.newRows(tmp.rows());
+		this.setAll(UNKNOWN_VALUE);
+		this.copyBlock(0, 0, tmp, 0, 0, tmp.rows(), tmp.cols());
+		for(int i = 0; i < this.rows(); i++) {
+			for(int k = tmp.cols(); k < names.length; k++)
+				this.m_data.get(i)[k] = UNKNOWN_VALUE;
+		}
+	}
+	
 	/// Adds a column to this matrix with the specified number of values. (Use 0 for
 	/// a continuous attribute.) This method also sets the number of rows to 0, so
 	/// you will need to call newRow or newRows when you are done adding columns.
@@ -390,6 +403,7 @@ public class Matrix {
 		// Make space for each of the columns, then each of the rows
 		newColumns(cols);
 		newRows(rows);
+		setAll(UNKNOWN_VALUE);
 	}
 	
 	/// Clears this matrix and copies the meta-data from that matrix. E.g., it makes a zero-row mat with 
