@@ -1,20 +1,12 @@
 class NeuralAgent extends IAgent {
 	NeuralNet nn;
-	double[] in;
+	double[] weights, in = new double[20];
 	int[][] acts = new int[][]{new int[3], new int[3], new int[3]};
-	public double[] weights;
+	int agentNum = 0;
 
 	NeuralAgent(double[] chromes) {
-		in = new double[20];
 		this.weights = chromes;
-		createNNverifyWeightCount(this.weights);  //weights = 291
 		setWeights(this.weights);
-	}
-
-	void setWeights(double[] weights) {	/// Sets the parames of this agent with the specified weights
-		int start = 0;
-		for(int i = 0; i < nn.layers.size(); i++)
-			start += nn.layers.get(i).setWeights(weights, start);
 	}
 
 	@Override
@@ -40,29 +32,24 @@ class NeuralAgent extends IAgent {
 		in[17] = m.getEnergyOpponent(2);
 		in[18] = m.getScoreSelf();
 		in[19] = m.getScoreOppo();	
-		//System.out.println("in: " + Arrays.stream(in).sum() + " / 20 = " + Arrays.stream(in).sum()/20);
 		
 		// Determine what each agent should do
 		double[] out = nn.forwardProp(in);
 		// Do it
 		for(int i = 0; i < 3; i++) {
 			if(out[i] < -0.333) {
-				acts[i][0] = acts[i][0] + 1;
 				beDefender(m, i);
 			}
 			else if(out[i] > 0.333) {
-				acts[i][1]+=1;
 				beAggressor(m, i);
 			}
 			else {
-				acts[i][2]+=1;
 				beFlagAttacker(m, i);
 			}	
 		}
-//		printActPercents(acts);
 	}
-
-	void createNNverifyWeightCount(double[] weights) {
+	
+	void setWeights(double[] weights) {	/// Sets the parames of this agent with the specified weights
 		nn = new NeuralNet();
 		nn.layers.add(new LayerLinear(in.length, 8));
 		nn.layers.add(new LayerTanh(8));
@@ -73,13 +60,16 @@ class NeuralAgent extends IAgent {
 		
 		if(weights.length != countWeights())
 			throw new IllegalArgumentException("Wrong number of weights. Got " + Integer.toString(weights.length) + ", expected " + Integer.toString(countWeights()));
+		
+		int start = 0;
+		for(int i = 0; i < nn.layers.size(); i++)
+			start += nn.layers.get(i).setWeights(weights, start);
 	}
 	
 	int countWeights() {	/// get # of weights necessary to fully-parameterize this agent
 		int n = 0;
 		for(int i = 0; i < nn.layers.size(); i++)
 			n += nn.layers.get(i).countWeights();
-//		System.out.println(n);
 		return n;
 	}
 	

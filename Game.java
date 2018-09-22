@@ -1,58 +1,89 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
 
-class Game {
-	String codeLetter = "a";
-	static int startNum = 1;
-	static int numOfSims = 1;
-
+class Game { // NO_UCD (unused code)
+	static char codeLet = 'a';
+	static int codeNum = 0;
+	static final int startNum = 1;
+	static final int numOfSims = 1;
+	static final int popSize = 100;
+	static String timestamp;
+	boolean[] finished;
+	
 	public static void main(String[] args) throws Exception {
-//		readData("a", startNum, numOfSims);
-		//Calls genetic algorithym to find a winning genome
-//		evolveWeights();
-		//Print Winning Genome
-//		printWeights(weights);
-		//Puts best NeuralAgent in real battle with GUI
-		//Controller.doBattle(new ReflexAgent(), new NeuralAgent(weights));
-		NeuralAgent agent = new NeuralAgent(evolveWeights());
-		Controller.doBattleNoGui(new ReflexAgent(), agent);
-		System.out.println("\n");
-		(Arrays.stream(agent.weights)).forEach(x->System.out.print(Double.toString(x) + " "));
+		Game g = new Game();
+		g.initGame();
 	}
 	
-	static double[] evolveWeights() throws Exception {
+	void initGame() throws Exception {
+		timestamp = (new SimpleDateFormat("M-d_H.mm.s")).format(new Date());	
+		//Calls genetic algorithym to find a winning genome
+		double[] weights = evolveWeights();
+		//Puts best NeuralAgent in real battle with GUI
+//		Controller.doBattle(new ReflexAgent(), new NeuralAgent(weights));
+//		NeuralAgent agent = new NeuralAgent(weights);
+//		Controller.doBattleNoGui(new ReflexAgent(), agent);
+//		Arrays.stream(weights).forEach(x->System.out.print(x + " "));
+	}
+	
+	double[] evolveWeights() throws Exception {
 		// Create a random initial population
-		Random r = new Random();
-		Matrix population = new Matrix(100, 291);
-		for(int i = 0; i < 100; i++) {
-			double[] chromosome = population.row(i);
-			for(int j = 0; j < chromosome.length; j++)  // chromosome.length = 291
-				chromosome[j] = .3 * r.nextGaussian();
-		}
+		Matrix pop = initPopulationSize(popSize);
+		
+
+
 		
 		
-//		ArrayList<IAgent> candidates = new ArrayList<>();
-//		for(int i = 0; i < population.rows(); i++)
-//			candidates.add(new NeuralAgent(population.row(i)));
-//
+		
+		return new double[] {0.0};
+		
+//		
 //		Long startTime = Instant.now().toEpochMilli();
-//		for(int i = 1; i < 2; i++)
-//			Controller.doTournament(candidates, "a", i);
+//		System.out.println("Start time: " + startTime);
+//		
+//		
+//		FastTourney evol1 = new FastTourney("t1", pop, startTime);
+		
+		
+//		Controller.doTournament(candidates, "a", 0);
+		
+//		for(int i = 0; i < popSize; i++)
+		
+//		System.out.println("Ending prog");
 //		System.out.println((Instant.now().toEpochMilli()-startTime)*.001 + " seconds");
 		
 		// Evolve them. For tournament selection, call Controller.doBattleNoGui(agent1, agent2).
 		
-		
 		// Return an arbitrary member from the population
-		double[] weights = population.row(0);
-		printWeights(weights);
-		return weights;
+//		double[] weights = population.row(0);
+//		printWeights(weights);
+//		return weights;
+//		Thread.sleep(2000);
+//		System.out.println(pop.cols() + "x" +pop.rows());
+//		return pop.row(0);
 	}
-
+	
+	static Matrix initPopulationSize(int size) {
+		Random r = new Random();
+		Matrix population = new Matrix(size, 291);
+		for(int i = 0; i < size; i++) {
+			double[] chromosome = population.row(i);
+			for(int j = 0; j < chromosome.length; j++)  // chromosome.length = 291
+				chromosome[j] = .3 * r.nextGaussian();
+		
+		}
+		return population;
+	}
+	
+	static void printWeights(double[] weights) {
+//		for(int i = 0; i < weights.length; i++)
+//			System.out.print(weights[i] + " ");
+	}
 	
 	static ArrayList<Integer[]> readData(String letter, int start, int end) throws FileNotFoundException {
 		ArrayList<Integer[]> data = new ArrayList<>();
@@ -66,11 +97,7 @@ class Game {
 		}
 		return data;
 	}
-	
-	static void printWeights(double[] w) {
-		for(double d: w)
-			System.out.print(d + " ");
-	}
+
 	
 	static double round(double d) {
 		return ((int)(1000*d))/100.0;

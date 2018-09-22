@@ -1,16 +1,17 @@
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+
 class Model {
-	static float speedFactor = 4.0f;
+	public static final float SPEEDFACTOR = 1.0f;
 	//Constants affecting time
 	public static final float ENERGY_RECHARGE_RATE = 0.0005f; // The amount of energy given to each sprite each frame
 	public static final float REST_RECHARGE_BONUS = 0.002f; // The amount of extra recharge if you are not moving or throwing
 	public static final float BROKEN_CRAWL_RATE = 0.3f; // The relative rate at which a broken robot can crawl back to its flag, then reassenble itself
-	public static final int BOMB_COOL_DOWN = (int)(40/speedFactor); // The number of frames a sprite must wait before throwing another bomb
+	public static final int BOMB_COOL_DOWN = (int)(40/SPEEDFACTOR); // The number of frames a sprite must wait before throwing another bomb
 	
 	public static final float EPSILON = 0.0001f; // A small number
 	public static final float XMAX = 1200.0f - EPSILON; // The maximum horizontal screen position. (The minimum is 0.)
@@ -25,8 +26,6 @@ class Model {
 	public static final float BOMB_DAMAGE_TO_FLAG = 0.05f; // The amount of energy a detonating bomb takes from a flag within its blast radius
 	public static final float BOMB_DAMAGE_TO_SPRITE = 0.3f; // The amount of energy a detonating bomb takes from all sprites within the blast radius
 	
-
-	private Controller controller;
 	private Object secret_symbol; // used to limit access to methods that agents could potentially use to cheat
 	private byte[] terrain;
 	private ArrayList<Sprite> sprites_blue;
@@ -40,7 +39,6 @@ class Model {
 	private float energy_red;
 
 	Model(Controller c, Object symbol) {
-		this.controller = c;
 		this.secret_symbol = symbol;
 	}
 
@@ -64,7 +62,6 @@ class Model {
 		sprites_red.add(new Sprite(100, 300));
 		sprites_red.add(new Sprite(100, 500));
 	}
-
 	Model clone(Controller c, Object symbol) {
 		Model m = new Model(c, symbol);
 		m.terrain = terrain; // shallow copy
@@ -89,19 +86,6 @@ class Model {
 		m.energy_red = energy_red;
 		return m;
 	}
-
-	// These methods are used internally. They are not useful to the agents.
-	private void checkSymbol(Object symbol) { if(symbol != this.secret_symbol) throw new NullPointerException("Counterfeit symbol!"); }
-	boolean amIblue(Object symbol) { checkSymbol(symbol); return sprites_self == sprites_blue; }
-	void setPerspectiveBlue(Object symbol) { checkSymbol(symbol); sprites_self = sprites_blue; sprites_opponent = sprites_red; }
-	void setPerspectiveRed(Object symbol) { checkSymbol(symbol); sprites_self = sprites_red; sprites_opponent = sprites_blue; }
-	void setFlagEnergyBlue(Object symbol, float val) { checkSymbol(symbol); energy_blue = val; }
-	void setFlagEnergyRed(Object symbol, float val) { checkSymbol(symbol); energy_red = val; }
-	byte[] getTerrain(Object symbol) { checkSymbol(symbol); return this.terrain; }
-	ArrayList<Sprite> getSpritesBlue(Object symbol) { checkSymbol(symbol); return this.sprites_blue; }
-	ArrayList<Sprite> getSpritesRed(Object symbol) { checkSymbol(symbol); return this.sprites_red; }
-	ArrayList<Bomb> getBombsFlying(Object symbol) { checkSymbol(symbol); return this.bombs_flying; }
-	ArrayList<Bomb> getBombsExploding(Object symbol) { checkSymbol(symbol); return this.bombs_exploding; }
 
 	void update() {
 		for(int i = 0; i < sprites_blue.size(); i++)			// Update the blue agents
@@ -153,14 +137,11 @@ class Model {
 				yy = 59 - yy;
 			}
 			int pos = 4 * (60 * yy + xx);
-			return speedFactor * Math.max(0.2f, Math.min(3.5f, -0.01f * (terrain[pos + 1] & 0xff) + 0.02f * (terrain[pos + 3] & 0xff)));
+			return SPEEDFACTOR * Math.max(0.2f, Math.min(3.5f, -0.01f * (terrain[pos + 1] & 0xff) + 0.02f * (terrain[pos + 3] & 0xff)));
 	}
 
-	Controller getController() { return controller; }
-	long getTimeBalance() { return controller.getTimeBalance(secret_symbol, sprites_self == sprites_blue); }
 	float getScoreSelf() { return (sprites_self == sprites_blue ? energy_blue : energy_red); }
 	float getScoreOppo() { return (sprites_self == sprites_blue ? energy_red : energy_blue); }
-	int getSpriteCountSelf() { return sprites_self.size(); }
 	float getX(int sprite) { return sprites_self.get(sprite).x; }
 	float getY(int sprite) { return sprites_self.get(sprite).y; }
 	float getEnergySelf(int sprite) { return sprites_self.get(sprite).energy; }
@@ -169,6 +150,19 @@ class Model {
 	float getYOpponent(int opponent) { return YMAX - sprites_opponent.get(opponent).y; }
 	float getEnergyOpponent(int sprite) { return sprites_opponent.get(sprite).energy; }
 	int getBombCount() { return bombs_flying.size(); }
+	
+	// These methods are used internally. They are not useful to the agents.
+	private void checkSymbol(Object symbol) { if(symbol != this.secret_symbol) throw new NullPointerException("Counterfeit symbol!"); }
+	boolean amIblue(Object symbol) { checkSymbol(symbol); return sprites_self == sprites_blue; }
+	void setPerspectiveBlue(Object symbol) { checkSymbol(symbol); sprites_self = sprites_blue; sprites_opponent = sprites_red; }
+	void setPerspectiveRed(Object symbol) { checkSymbol(symbol); sprites_self = sprites_red; sprites_opponent = sprites_blue; }
+	void setFlagEnergyBlue(Object symbol, float val) { checkSymbol(symbol); energy_blue = val; }
+	void setFlagEnergyRed(Object symbol, float val) { checkSymbol(symbol); energy_red = val; }
+	byte[] getTerrain(Object symbol) { checkSymbol(symbol); return this.terrain; }
+	ArrayList<Sprite> getSpritesBlue(Object symbol) { checkSymbol(symbol); return this.sprites_blue; }
+	ArrayList<Sprite> getSpritesRed(Object symbol) { checkSymbol(symbol); return this.sprites_red; }
+	ArrayList<Bomb> getBombsFlying(Object symbol) { checkSymbol(symbol); return this.bombs_flying; }
+	ArrayList<Bomb> getBombsExploding(Object symbol) { checkSymbol(symbol); return this.bombs_exploding; }
 
 	float getBombTargetX(int bomb) {
 		if(sprites_self == sprites_blue)
@@ -176,14 +170,12 @@ class Model {
 		else
 			return XMAX - bombs_flying.get(bomb).xEnd;
 	}
-
 	float getBombTargetY(int bomb) {
 		if(sprites_self == sprites_blue)
 			return bombs_flying.get(bomb).yEnd;
 		else
 			return YMAX - bombs_flying.get(bomb).yEnd;
 	}
-
 	void setDestination(int sprite, float x, float y) {
 		Sprite s = sprites_self.get(sprite);
 		if(s.energy >= 0) { // when you are dead, you cannot change your destination
@@ -197,11 +189,6 @@ class Model {
 			s.xDestination = x;
 			s.yDestination = y;
 		}
-	}
-
-	double getDistanceToDestination(int sprite) {
-		Sprite s = sprites_self.get(sprite);
-		return Math.sqrt((s.x - s.xDestination) * (s.x - s.xDestination) + (s.y - s.yDestination) * (s.y - s.yDestination));
 	}
 
 	void throwBomb(int sprite, float x, float y) {
@@ -229,7 +216,6 @@ class Model {
 		}
 		bombs_throwing.add(new Bomb(xStart, yStart, x, y));
 	}
-
 	class Sprite {
 		float x, y, xDestination, yDestination, energy;
 		int cooldown;
@@ -237,15 +223,6 @@ class Model {
 		Sprite(float x, float y) {
 			this.x = x; this.y = y; this.xDestination = x; this.yDestination = y;
 			this.energy = 1.0f; this.cooldown = 0;
-		}
-
-		Sprite clone(Model m) {
-			Sprite s = m.new Sprite(x, y);
-			s.xDestination = xDestination;
-			s.yDestination = yDestination;
-			s.energy = energy;
-			s.cooldown = cooldown;
-			return s;
 		}
 
 		void update() {
@@ -271,6 +248,15 @@ class Model {
 			this.y = Math.max(0.0f, Math.min(YMAX, this.y));
 			this.cooldown = Math.max(0, this.cooldown - 1);
 		}
+		
+		Sprite clone(Model m) {
+			Sprite s = m.new Sprite(x, y);
+			s.xDestination = xDestination;
+			s.yDestination = yDestination;
+			s.energy = energy;
+			s.cooldown = cooldown;
+			return s;
+		}
 
 		void onDetonation(Bomb b, boolean red) {
 			if(!b.doesHit(red ? XMAX - x : x, red ? YMAX - y : y) || energy < 0.0f)
@@ -282,7 +268,6 @@ class Model {
 			}
 		}
 	}
-
 	static class Bomb {
 		float xBegin, yBegin, xEnd, yEnd, distance, position, prevPos;
 
@@ -296,6 +281,12 @@ class Model {
 			prevPos = 0.0f;
 		}
 
+		boolean update() {
+			prevPos = position;
+			position += (SPEEDFACTOR * 3.5);
+			return position < distance + BLAST_RADIUS;
+		}
+
 		protected Bomb clone() {
 			Bomb b = new Bomb(xBegin, yBegin, xEnd, yEnd);
 			b.distance = distance;
@@ -304,18 +295,10 @@ class Model {
 			return b;
 		}
 
-		boolean doesHit(float x, float y) {
-			return (x - xEnd) * (x - xEnd) + (y - yEnd) * (y - yEnd) < BLAST_RADIUS * BLAST_RADIUS;
-		}
-
-		boolean update() {
-			prevPos = position;
-			position += (speedFactor * 3.5);
-			return position < distance + BLAST_RADIUS;
+		boolean doesHit(float x, float y) { return (x-xEnd) * (x-xEnd) + (y-yEnd) * (y-yEnd) < BLAST_RADIUS * BLAST_RADIUS;
 		}
 
 		float getX() { return (Math.min(1.0f, (position / distance)) * (xEnd - xBegin)) + xBegin; }
 		float getY() { return (Math.min(1.0f, (position / distance)) * (yEnd - yBegin)) + yBegin; }
-		boolean isDetonating() { return prevPos < distance && position >= distance; }
 	}
 }

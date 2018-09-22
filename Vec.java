@@ -1,4 +1,3 @@
-/// Provides several useful static methods for operating on arrays of doubles
 public class Vec {
 	public static Json marshal(double[] vec) {
 		Json list = Json.newList();

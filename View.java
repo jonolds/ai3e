@@ -5,7 +5,6 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -37,7 +36,6 @@ public class View extends JFrame implements ActionListener {
 	class MyPanel extends JPanel {
 		public static final int FLAG_IMAGE_HEIGHT = 25;
 		Image img_bot_blue, img_bot_red, img_dead, img_flag_blue, img_flag_red;
-		BufferedImage bi;
 
 		MyPanel() throws Exception {
 			this.img_bot_blue = ImageIO.read(new File("robot_blue.png"));
@@ -80,7 +78,6 @@ public class View extends JFrame implements ActionListener {
 				}
 			}
 		}
-		
 		private void drawFlags(Graphics g) {	// Blue/Red
 			g.drawImage(img_flag_blue, (int)Model.XFLAG, (int)Model.YFLAG - FLAG_IMAGE_HEIGHT, null);
 			g.setColor(new Color(0, 0, 128));
@@ -94,7 +91,6 @@ public class View extends JFrame implements ActionListener {
 			energy = (int)(model.getScoreOppo() * 32.0f);
 			g.fillRect((int)Model.XFLAG_OPPONENT - 2, (int)Model.YFLAG_OPPONENT + 7 - energy, 2, energy);
 		}
-
 		private void drawSprites(Graphics g) {
 			ArrayList<Model.Sprite> sprites_blue = model.getSpritesBlue(secret_symbol);
 			for(int i = 0; i < sprites_blue.size(); i++) {
@@ -132,7 +128,6 @@ public class View extends JFrame implements ActionListener {
 					g.drawImage(img_dead, (int)(Model.XMAX - 1 - s.x) - 12, (int)(Model.YMAX - 1 - s.y) - 32, null);
 			}
 		}
-
 		private void drawBombs(Graphics g) {
 			ArrayList<Model.Bomb> bombs = model.getBombsFlying(secret_symbol);
 			for(int i = 0; i < bombs.size(); i++) {
@@ -157,7 +152,6 @@ public class View extends JFrame implements ActionListener {
 				g.drawOval(x - r, y - r, 2 * r, 2 * r);
 			}
 		}
-		
 		void checkIfOver() {
 			model.setPerspectiveBlue(secret_symbol);
 			if(model.getScoreSelf() < 0.0f && model.getScoreOppo() >= 0.0f)

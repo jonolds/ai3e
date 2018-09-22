@@ -2,21 +2,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Scanner;
 
-/// This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
-/// represented as a double value. Nominal values are represented using their
-/// corresponding zero-indexed enumeration value. For convenience,
-/// the matrix also stores some meta-data which describes the columns (or attributes)
-/// in the matrix.
+/// The matrix also stores some meta-data which describe the columns (or attributes).
 public class Matrix {
+	
 	/// Used to represent elements in the matrix for which the value is not known.
 	public static final double UNKNOWN_VALUE = -1e308; 
 	// Data
-	private ArrayList<double[]> m_data = new ArrayList<>(); //matrix elements
+	public ArrayList<double[]> m_data = new ArrayList<double[]>(); //matrix elements
 	// Meta-data
-	private String m_filename;                          // the name of the file
-	private ArrayList<String> m_attr_name;                 // the name of each attribute (or column)
+	public String m_filename;                          // the name of the file
+	public ArrayList<String> m_attr_name;                 // the name of each attribute (or column)
 	private ArrayList<HashMap<String, Integer>> m_str_to_enum; // value to enumeration
 	private ArrayList<HashMap<Integer, String>> m_enum_to_str; // enumeration to value
 
@@ -28,27 +30,138 @@ public class Matrix {
 //	@SuppressWarnings("unchecked")
 	public Matrix() {
 		this.m_filename    = "";
-		this.m_attr_name   = new ArrayList<>();
-		this.m_str_to_enum = new ArrayList<>();
-		this.m_enum_to_str = new ArrayList<>();
+		this.m_attr_name   = new ArrayList<String>();
+		this.m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
+		this.m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
 	}
 
 	public Matrix(int rows, int cols) {
 		this.m_filename    = "";
-		this.m_attr_name   = new ArrayList<>();
-		this.m_str_to_enum = new ArrayList<>();
-		this.m_enum_to_str = new ArrayList<>();
+		this.m_attr_name   = new ArrayList<String>();
+		this.m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
+		this.m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
 		setSize(rows, cols);
 	}
 
 	public Matrix(Matrix that) {
 		m_filename = that.m_filename;
-		m_attr_name = new ArrayList<>();
-		m_str_to_enum = new ArrayList<>();
-		m_enum_to_str = new ArrayList<>();
+		m_attr_name = new ArrayList<String>();
+		m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
+		m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
 		setSize(that.rows(), that.cols());
 		copyBlock(0, 0, that, 0, 0, that.rows(), that.cols()); // (copies the meta data too)
 	}
+	
+	//Add a column with a new name;
+	public void addCol(String colName) {
+		Matrix matTmp = new Matrix(this);
+		this.newColumn("agentNum");
+		this.newRows(matTmp.rows());
+		this.copyBlock(0, 0, matTmp, 0, 0, matTmp.rows(), matTmp.cols());
+		for(int i = 0; i < this.rows(); i++)
+			this.m_data.get(i)[this.cols()-1] = UNKNOWN_VALUE;
+	}
+	
+	public int getIndexByColName(String name) {
+		return this.m_attr_name.indexOf(name);
+	}
+	
+	//Add a column with a new name;
+	public void addColFilled(String colName, double startNum) {
+		Matrix matTmp = new Matrix(this);
+		this.newColumn("agentNum");
+		this.newRows(matTmp.rows());
+		this.copyBlock(0, 0, matTmp, 0, 0, matTmp.rows(), matTmp.cols());
+		for(double i = startNum; i < startNum + this.rows(); i++)
+			this.m_data.get((int)i)[this.cols()-1] = i;
+	}
+	
+	/// Adds a column to this matrix with the specified number of values. (Use 0 for
+	/// a continuous attribute.) This method also sets the number of rows to 0, so
+	/// you will need to call newRow or newRows when you are done adding columns.
+	public void newColumn(int vals) {
+		m_data.clear();
+		String name = "col_" + cols();
+		
+		m_attr_name.add(name);
+		
+		HashMap<String, Integer> temp_str_to_enum = new HashMap<String, Integer>();
+		HashMap<Integer, String> temp_enum_to_str = new HashMap<Integer, String>();
+		
+		for (int i = 0; i < vals; i++) {
+			String sVal = "val_" + i;
+			temp_str_to_enum.put(sVal, i);
+			temp_enum_to_str.put(i, sVal);
+		}
+		
+		m_str_to_enum.add(temp_str_to_enum);
+		m_enum_to_str.add(temp_enum_to_str);
+	}
+	
+	/// Adds a column to this matrix with 0 values (continuous data).
+	public void newColumn() {
+		this.newColumn(0);
+	}
+	
+	/// Adds n columns to this matrix, each with 0 values (continuous data).
+	public void newColumns(int n) {
+		for (int i = 0; i < n; i++)
+			newColumn();
+	}
+
+	/// Returns the index of the specified value in the specified column.
+	/// If there is no such value, adds it to the column.
+	public int findOrCreateValue(int column, String val) {
+		Integer i = m_str_to_enum.get(column).get(val);
+		if(i == null) {
+			int nextVal = m_enum_to_str.get(column).size();
+			Integer integ = new Integer(nextVal);
+			m_enum_to_str.get(column).put(integ, val);
+			m_str_to_enum.get(column).put(val, integ);
+			return nextVal;
+		}
+		else
+			return i.intValue();
+	}
+
+	/// Adds one new row to this matrix. Returns a reference to the new row.
+	public double[] newRow() {
+		int c = cols();
+		if (c == 0)
+			throw new IllegalArgumentException("You must add some columns before you add any rows.");
+		double[] newRow = new double[c];
+		m_data.add(newRow);
+		return newRow;
+	}
+
+	/// Adds one new row to this matrix at the specified location. Returns a reference to the new row.
+	public double[] insertRow(int i) {
+		int c = cols();
+		if (c == 0)
+			throw new IllegalArgumentException("You must add some columns before you add any rows.");
+		double[] newRow = new double[c];
+		m_data.add(i, newRow);
+		return newRow;
+	}
+
+	/// Removes the specified row from this matrix. Returns a reference to the removed row.
+	public double[] removeRow(int i) {
+		return m_data.remove(i);
+	}
+
+	/// Appends the specified row to this matrix.
+	public void takeRow(double[] row) {
+		if(row.length != cols())
+			throw new IllegalArgumentException("Row size differs from the number of columns in this matrix.");
+		m_data.add(row);
+	}
+
+	/// Adds 'n' new rows to this matrix
+	public void newRows(int n) {
+		for (int i = 0; i < n; i++)
+			newRow();
+	}
+
 
 	public Matrix(Json n) {
 		int rowCount = n.size();
@@ -87,8 +200,8 @@ public class Matrix {
 				if (upper.startsWith("@RELATION"))
 					m_filename = line.split(" ")[1];
 				else if (upper.startsWith("@ATTRIBUTE")) {
-					HashMap<String, Integer> str_to_enum = new HashMap<>();
-					HashMap<Integer, String> enum_to_str = new HashMap<>();
+					HashMap<String, Integer> str_to_enum = new HashMap<String, Integer>();
+					HashMap<Integer, String> enum_to_str = new HashMap<Integer, String>();
 					m_str_to_enum.add(str_to_enum);
 					m_enum_to_str.add(enum_to_str);
 					Json.StringParser sp = new Json.StringParser(line);
@@ -278,17 +391,18 @@ public class Matrix {
 		newColumns(cols);
 		newRows(rows);
 	}
+	
 	/// Clears this matrix and copies the meta-data from that matrix. E.g., it makes a zero-row mat with 
 	///the same number of cols as the orig. Use newRow or newRows to give the mat some rows.
 //	@SuppressWarnings("unchecked")
 	public void copyMetaData(Matrix that) {
 		m_data.clear();
-		m_attr_name = new ArrayList<>(that.m_attr_name);
+		m_attr_name = new ArrayList<String>(that.m_attr_name);
 		
 		// Make a deep copy of that.m_str_to_enum
-		m_str_to_enum = new ArrayList<>();
+		m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
 		for (HashMap<String, Integer> map : that.m_str_to_enum) {
-			HashMap<String, Integer> temp = new HashMap<>();
+			HashMap<String, Integer> temp = new HashMap<String, Integer>();
 			for (Map.Entry<String, Integer> entry : map.entrySet())
 				temp.put(entry.getKey(), entry.getValue());
 			
@@ -296,9 +410,9 @@ public class Matrix {
 		}
 		
 		// Make a deep copy of that.m_enum_to_string
-		m_enum_to_str = new ArrayList<>();
+		m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
 		for (HashMap<Integer, String> map : that.m_enum_to_str) {
-			HashMap<Integer, String> temp = new HashMap<>();
+			HashMap<Integer, String> temp = new HashMap<Integer, String>();
 			for (Map.Entry<Integer, String> entry : map.entrySet())
 				temp.put(entry.getKey(), entry.getValue());
 			
@@ -310,94 +424,8 @@ public class Matrix {
 	public void newColumn(String name) {
 		m_data.clear();
 		m_attr_name.add(name);
-		m_str_to_enum.add(new HashMap<>());
-		m_enum_to_str.add(new HashMap<>());
-	}
-
-	/// Adds a column to this matrix with the specified number of values. (Use 0 for
-	/// a continuous attribute.) This method also sets the number of rows to 0, so
-	/// you will need to call newRow or newRows when you are done adding columns.
-	public void newColumn(int vals) {
-		m_data.clear();
-		String name = "col_" + cols();
-		
-		m_attr_name.add(name);
-		
-		HashMap<String, Integer> temp_str_to_enum = new HashMap<>();
-		HashMap<Integer, String> temp_enum_to_str = new HashMap<>();
-		
-		for (int i = 0; i < vals; i++) {
-			String sVal = "val_" + i;
-			temp_str_to_enum.put(sVal, i);
-			temp_enum_to_str.put(i, sVal);
-		}
-		
-		m_str_to_enum.add(temp_str_to_enum);
-		m_enum_to_str.add(temp_enum_to_str);
-	}
-	
-	/// Adds a column to this matrix with 0 values (continuous data).
-	public void newColumn() {
-		this.newColumn(0);
-	}
-	
-	/// Adds n columns to this matrix, each with 0 values (continuous data).
-	public void newColumns(int n) {
-		for (int i = 0; i < n; i++)
-			newColumn();
-	}
-
-	/// Returns the index of the specified value in the specified column.
-	/// If there is no such value, adds it to the column.
-	public int findOrCreateValue(int column, String val) {
-		Integer i = m_str_to_enum.get(column).get(val);
-		if(i == null) {
-			int nextVal = m_enum_to_str.get(column).size();
-			Integer integ = new Integer(nextVal);
-			m_enum_to_str.get(column).put(integ, val);
-			m_str_to_enum.get(column).put(val, integ);
-			return nextVal;
-		}
-		else
-			return i.intValue();
-	}
-
-	/// Adds one new row to this matrix. Returns a reference to the new row.
-	public double[] newRow() {
-		int c = cols();
-		if (c == 0)
-			throw new IllegalArgumentException("You must add some columns before you add any rows.");
-		double[] newRow = new double[c];
-		m_data.add(newRow);
-		return newRow;
-	}
-
-	/// Adds one new row to this matrix at the specified location. Returns a reference to the new row.
-	public double[] insertRow(int i) {
-		int c = cols();
-		if (c == 0)
-			throw new IllegalArgumentException("You must add some columns before you add any rows.");
-		double[] newRow = new double[c];
-		m_data.add(i, newRow);
-		return newRow;
-	}
-
-	/// Removes the specified row from this matrix. Returns a reference to the removed row.
-	public double[] removeRow(int i) {
-		return m_data.remove(i);
-	}
-
-	/// Appends the specified row to this matrix.
-	public void takeRow(double[] row) {
-		if(row.length != cols())
-			throw new IllegalArgumentException("Row size differs from the number of columns in this matrix.");
-		m_data.add(row);
-	}
-
-	/// Adds 'n' new rows to this matrix
-	public void newRows(int n) {
-		for (int i = 0; i < n; i++)
-			newRow();
+		m_str_to_enum.add(new HashMap<String, Integer>());
+		m_enum_to_str.add(new HashMap<Integer, String>());
 	}
 
 	/// Returns the number of rows in the matrix
@@ -502,7 +530,7 @@ public class Matrix {
 
 	/// Returns the most common value in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
 	public double mostCommonValue(int col) {
-		HashMap<Double, Integer> counts = new HashMap<>();
+		HashMap<Double, Integer> counts = new HashMap<Double, Integer>();
 		for (double[] list : m_data) {
 			double val = list[col];
 			if (val != UNKNOWN_VALUE) {
@@ -533,8 +561,8 @@ public class Matrix {
 		// Copy the specified region of meta-data
 		for (int i = 0; i < colCount; i++) {
 			m_attr_name.set(destCol + i, that.m_attr_name.get(colBegin + i));
-			m_str_to_enum.set(destCol + i, new HashMap<>(that.m_str_to_enum.get(colBegin + i)));
-			m_enum_to_str.set(destCol + i, new HashMap<>(that.m_enum_to_str.get(colBegin + i)));
+			m_str_to_enum.set(destCol + i, new HashMap<String, Integer>(that.m_str_to_enum.get(colBegin + i)));
+			m_enum_to_str.set(destCol + i, new HashMap<Integer, String>(that.m_enum_to_str.get(colBegin + i)));
 		}
 		// Copy the specified region of data
 		for (int i = 0; i < rowCount; i++) {

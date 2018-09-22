@@ -22,45 +22,23 @@ class Controller implements MouseListener {
 	private boolean amIblue;
 	
 	//DO A TOURNAMENT - calls rankAgents method
-	static void doTournament(ArrayList<IAgent> agents, String letter, int num) throws Exception {
+	static void doTournament(ArrayList<IAgent> agents, String letter, int num) throws Exception { // NO_UCD (unused code)
 		int[] wins = new int[agents.size()+1]; //Extra space for ties
 		// Make every agent battle against every other agent
 		for(int i = 0; i < agents.size(); i++) {
 			for(int j = 0; j < agents.size(); j++) {
 				if(j != i) { //Skip iteration if agent is fighting itself
 					int outcome = Controller.doBattleNoGui(agents.get(i), agents.get(j));
-					if(outcome > 0) {
+					if(outcome > 0)
 						wins[i]++;
-						//System.out.println("Battle " + Arrays.stream(wins).sum() + ":   #" + i + " beats #" + j);
-					}
-					else if(outcome < 0) {
+					else if(outcome < 0)
 						wins[j]++;
-						//System.out.println("Battle " + Arrays.stream(wins).sum() + ":   #" + j + " beats #" + i);
-					}
-					else {
+					else 
 						wins[agents.size()]++;
-						//System.out.println("Battle " + Arrays.stream(wins).sum() + ":   TIE #" + j + " #" + i);
-					}
 				}
 			}
 		}
 		printWins(wins, letter + num);
-		
-//		// Sort the agents by wins (using insertion sort)
-//		int[] agentIndexes = new int[agents.size()];
-//		for(int i = 0; i < agents.size(); i++)
-//			agentIndexes[i] = i;
-//		for(int i = 1; i < agents.size(); i++) {
-//			for(int j = i; j > 0; j--) {
-//				if(wins[agentIndexes[j]] > wins[agentIndexes[j - 1]]) {
-//					int t = agentIndexes[j];
-//					agentIndexes[j] = agentIndexes[j - 1];
-//					agentIndexes[j - 1] = t;
-//				}
-//				else
-//					break;
-//			}
-//		}
 	}
 
 	static void printWins(int[] wins, String code) throws IOException {
@@ -96,7 +74,7 @@ class Controller implements MouseListener {
 	}
 	
 	//REGULAR BATTLE
-	static void doBattle(IAgent blue, IAgent red) throws Exception {
+	static void doBattle(IAgent blue, IAgent red) throws Exception { // NO_UCD (unused code)
 		Object ss = new Object();
 		Controller c = new Controller(ss, blue, red);
 		c.initializeGame();
@@ -170,22 +148,9 @@ class Controller implements MouseListener {
 	
 	
 	//GETTERS
-	Model getModel() { return model; }
 	int getSelectedSprite() { return selectedSprite; }
 	long getTimeBalance(Object secret_symbol, boolean blue) { return blue ? blue_time_balance : red_time_balance; }
-	long getIter() { return iter; }
-	String getBlueName() { return blueAgent.getClass().getName(); }
-	String getRedName() { return redAgent.getClass().getName(); }
 
-	
-	//REPLAY FEATURE - calls fork(IAgent myShadowAgent, IAgent opponentShadowAgent)
-	Controller makeReplayPoint(Object symbol) {
-		if(symbol != this.secret_symbol)
-			throw new NullPointerException("Counterfeit symbol!");
-		Controller c = fork(blueAgent, redAgent);
-		c.view = this.view;
-		return c;
-	}	
 	Controller fork(IAgent myShadowAgent, IAgent opponentShadowAgent) {
 		amIblue = model.amIblue(secret_symbol);
 		Controller c = new Controller(secret_symbol, amIblue ? myShadowAgent : opponentShadowAgent, amIblue ? opponentShadowAgent : myShadowAgent);
@@ -198,9 +163,8 @@ class Controller implements MouseListener {
 		return c;
 	}
 	
-	
 	//Mouse Stuff
-	MouseEvent nextMouseEvent() {
+	MouseEvent nextMouseEvent() { // NO_UCD (unused code)
 		if(mouseEvents.size() == 0)
 			return null;
 		return mouseEvents.remove();
@@ -216,51 +180,4 @@ class Controller implements MouseListener {
 	public void mouseEntered(MouseEvent e) {    }
 	public void mouseExited(MouseEvent e) {    }
 	public void mouseClicked(MouseEvent e) {    }
-
-
-
-//	//RANK AGENTS - Calls doBattleNoGui(IAgent, IAgent) between every set of Agents
-//	static int[] rankAgents(ArrayList<IAgent> agents, int[] wins, boolean verbose) throws Exception {
-//		// Make every agent battle against every other agent
-//		if(verbose)
-//			System.out.println("\nBattles:");
-////		int n = agents.size() * (agents.size() - 1);
-//		for(int i = 0; i < agents.size(); i++) {
-//			for(int j = 0; j < agents.size(); j++) {
-//				if(j == i)
-//					continue;
-//				if(verbose) 
-//					System.out.print("	" + agents.get(i).getClass().getName() + " vs " + agents.get(j).getClass().getName() + ". Winner: ");
-//				int outcome = Controller.doBattleNoGui(agents.get(i), agents.get(j));
-//				if(outcome > 0) {
-//					if(verbose) System.out.println(agents.get(i).getClass().getName());
-//					wins[i]++;
-//				}
-//				else if(outcome < 0) {
-//					if(verbose) System.out.println(agents.get(j).getClass().getName());
-//					wins[j]++;
-//				}
-//				else {
-//					if(verbose) System.out.println("Tie");
-//				}
-//			}
-//		}
-//
-//		// Sort the agents by wins (using insertion sort)
-//		int[] agentIndexes = new int[agents.size()];
-//		for(int i = 0; i < agents.size(); i++)
-//			agentIndexes[i] = i;
-//		for(int i = 1; i < agents.size(); i++) {
-//			for(int j = i; j > 0; j--) {
-//				if(wins[agentIndexes[j]] > wins[agentIndexes[j - 1]]) {
-//					int t = agentIndexes[j];
-//					agentIndexes[j] = agentIndexes[j - 1];
-//					agentIndexes[j - 1] = t;
-//				}
-//				else
-//					break;
-//			}
-//		}
-//		return agentIndexes;
-//	}
 }
